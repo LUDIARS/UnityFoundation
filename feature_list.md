@@ -112,6 +112,20 @@ QuantizeTest: クォンタイズのタイミングテスト
 [[BoxSelectionTest]]
 [[QuantizeTest]]
 
+## Foundation Remote (遠隔デバッグ)(未検証)
+WebSocket 制御 + WebRTC 映像で実機/エディタを遠隔操作・観測するサブシステム。
+コマンド一覧/実行・シーン遷移・master.reload・テレメトリ(FPS/メモリ/ログ)を WS で中継。
+映像送出は `FOUNDATION_REMOTE_WEBRTC` 定義 + com.unity.webrtc で opt-in。
+RemoteDebugBehaviour をブートストラップシーンに置くだけで起動。リリースビルドには含まれない。
+プロトコルは [[protocol]] / [[unity-client]] / [[data-studio]]。
+[[RemoteDebugBehaviour]]
+[[RemoteDebugClient]]
+[[RemoteCommandBridge]]
+[[RemoteSceneBridge]]
+[[RemoteTelemetry]]
+[[RemoteVideoSender]]
+[[RemoteMessage]]
+
 ## Melpomene(未検証)
 GitHub Issues連携デバッグツール（エディタ専用）。
 シーン上のオブジェクトに紐づけたバグ報告や改善要望を管理する。
