@@ -11,6 +11,8 @@ import { Hub } from "../bus/hub.js";
 import { MediaRelay } from "../rtc/mediaRelay.js";
 import { SheetStore } from "../datastudio/store.js";
 import { handleApi, type ApiRequest } from "../datastudio/routes.js";
+import { handleMelpomeneReport } from "../melpomene/relay.js";
+import { makeGitHubIssueCreator } from "../melpomene/github.js";
 import { serveStatic } from "./static.js";
 import { WsConn } from "./wsConn.js";
 
@@ -86,6 +88,22 @@ async function handleHttp(
 ): Promise<void> {
   const url = new URL(req.url ?? "/", "http://x");
   const method = req.method ?? "GET";
+
+  // Melpomene リレー(トークンはサーバ側 env)。汎用 API ルータより先に処理する。
+  if (url.pathname === "/api/melpomene/report") {
+    if (method !== "POST") {
+      res.writeHead(405, { "content-type": "application/json" }).end(JSON.stringify({ success: false, error: "method_not_allowed" }));
+      return;
+    }
+    const result = await handleMelpomeneReport(await readBody(req), req.headers.authorization, {
+      createIssue: makeGitHubIssueCreator({ token: config.melpomene.githubToken, repo: config.melpomene.repo }),
+      relayAuth: config.melpomene.relayAuth,
+    });
+    res
+      .writeHead(result.status, { "content-type": "application/json; charset=utf-8" })
+      .end(JSON.stringify(result.body));
+    return;
+  }
 
   if (url.pathname === "/api" || url.pathname.startsWith("/api/") || url.pathname === "/master") {
     const apiReq: ApiRequest = {

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -8,52 +7,35 @@ using UnityEngine.Networking;
 namespace Foundation.Melpomene
 {
     /// <summary>
-    /// ランタイムから GitHub Issues API へ Issue を作成するクライアント。
+    /// GitHub Issues API へ直接 Issue を作成する送信先(PAT 同梱)。
     /// UnityWebRequest + UniTask で実装しており、ビルド後のプレイヤーでも動作する。
+    /// 旧 <c>MelpomeneIssueClient</c> をリネームし、<see cref="IMelpomeneSubmitTarget"/> 実装にしたもの。
     /// </summary>
-    public class MelpomeneIssueClient
+    public class MelpomeneGitHubTarget : IMelpomeneSubmitTarget
     {
         readonly MelpomeneRuntimeConfig _config;
 
-        public MelpomeneIssueClient(MelpomeneRuntimeConfig config)
+        public MelpomeneGitHubTarget(MelpomeneRuntimeConfig config)
         {
             _config = config;
         }
 
-        /// <summary>Issue 作成結果。</summary>
-        public struct Result
-        {
-            public bool Success;
-            public int IssueNumber;
-            public string IssueUrl;
-            public string Error;
-        }
+        public string DisplayName => "GitHub (direct)";
 
-        /// <summary>
-        /// Issue を作成する。設定が無効な場合や通信失敗時は <see cref="Result.Success"/> が false になる。
-        /// </summary>
-        public async UniTask<Result> CreateIssueAsync(MelpomeneReportTicket ticket)
+        public async UniTask<MelpomeneSubmitResult> SubmitAsync(MelpomeneReportTicket ticket)
         {
             if (_config == null || !_config.IsValid)
             {
-                return new Result { Success = false, Error = "Melpomene config is missing or invalid." };
+                return MelpomeneSubmitResult.Fail("Melpomene config is missing or invalid.");
             }
 
             var url = $"{_config.ApiBaseUrl}/issues";
-
-            var labels = new List<string>();
-            if (_config.defaultLabels != null)
-            {
-                labels.AddRange(_config.defaultLabels);
-            }
-            labels.Add(ticket.priority.ToString().ToLower());
-            labels.Add(ticket.category.ToString().ToLower());
 
             var requestBody = new GitHubIssueRequest
             {
                 title = ticket.GenerateIssueTitle(),
                 body = ticket.GenerateIssueBody(),
-                labels = labels.ToArray(),
+                labels = MelpomeneLabelBuilder.Build(_config, ticket),
             };
 
             var json = JsonUtility.ToJson(requestBody);
@@ -77,29 +59,24 @@ namespace Foundation.Melpomene
                 {
                     var err = $"{e.Error} / {e.Text}";
                     Debug.LogError($"[Melpomene] Failed to create issue: {err}");
-                    return new Result { Success = false, Error = err };
+                    return MelpomeneSubmitResult.Fail(err);
                 }
                 catch (Exception e)
                 {
                     Debug.LogError($"[Melpomene] Exception creating issue: {e.Message}");
-                    return new Result { Success = false, Error = e.Message };
+                    return MelpomeneSubmitResult.Fail(e.Message);
                 }
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
                     var response = JsonUtility.FromJson<GitHubIssueResponse>(request.downloadHandler.text);
                     Debug.Log($"[Melpomene] Issue created: #{response.number} - {response.html_url}");
-                    return new Result
-                    {
-                        Success = true,
-                        IssueNumber = response.number,
-                        IssueUrl = response.html_url,
-                    };
+                    return MelpomeneSubmitResult.Ok(response.number, response.html_url);
                 }
 
                 var fallbackErr = $"{request.error} / {request.downloadHandler.text}";
                 Debug.LogError($"[Melpomene] Failed to create issue: {fallbackErr}");
-                return new Result { Success = false, Error = fallbackErr };
+                return MelpomeneSubmitResult.Fail(fallbackErr);
             }
         }
 

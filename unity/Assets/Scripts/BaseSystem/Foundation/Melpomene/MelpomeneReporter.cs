@@ -15,7 +15,7 @@ namespace Foundation.Melpomene
     public class MelpomeneReporter : MonoBehaviour
     {
         MelpomeneRuntimeConfig _config;
-        MelpomeneIssueClient _client;
+        IMelpomeneSubmitTarget _target;
 
         bool _open;
         bool _sending;
@@ -37,7 +37,7 @@ namespace Foundation.Melpomene
         public void Initialize(MelpomeneRuntimeConfig config)
         {
             _config = config;
-            _client = new MelpomeneIssueClient(config);
+            _target = MelpomeneSubmitTargetFactory.Create(config);
             _userName = SystemInfo.deviceName;
         }
 
@@ -90,9 +90,17 @@ namespace Foundation.Melpomene
         {
             using (new GUILayout.VerticalScope())
             {
+                if (_target != null)
+                {
+                    GUILayout.Label($"送信先: {_target.DisplayName}");
+                }
+
                 if (!_config.IsValid)
                 {
-                    GUILayout.Label("⚠ 設定が未完成です（repositoryOwner / repositoryName / accessToken）。\n" +
+                    var missing = _config.submitMode == MelpomeneSubmitMode.Relay
+                        ? "relayUrl"
+                        : "repositoryOwner / repositoryName / accessToken";
+                    GUILayout.Label($"⚠ 設定が未完成です（{missing}）。\n" +
                                     "Resources/MelpomeneRuntimeConfig を設定してください。");
                 }
 
@@ -165,7 +173,7 @@ namespace Foundation.Melpomene
                 timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             };
 
-            var result = await _client.CreateIssueAsync(ticket);
+            var result = await _target.SubmitAsync(ticket);
 
             _sending = false;
             if (result.Success)
