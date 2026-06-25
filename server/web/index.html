@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Foundation Debug Panel</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body class="foundation-form">
+  <header>
+    <h1>Foundation Debug</h1>
+    <div class="status">
+      <span><span id="dot-ws" class="dot"></span>Server</span>
+      <span><span id="dot-unity" class="dot"></span>Unity</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>映像 (WebRTC)</h2>
+      <video id="video" autoplay playsinline muted></video>
+      <div class="spacer"></div>
+      <div class="row">
+        <button id="btn-watch">映像を受信</button>
+        <button id="btn-stop-watch" class="ghost">停止</button>
+        <span id="video-state" class="muted">未接続</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>テレメトリ</h2>
+      <div class="telemetry">
+        <div class="metric"><div class="v" id="m-fps">-</div><div class="k">FPS</div></div>
+        <div class="metric"><div class="v" id="m-mem">-</div><div class="k">Mem MB</div></div>
+        <div class="metric"><div class="v" id="m-scene">-</div><div class="k">Scene</div></div>
+        <div class="metric"><div class="v" id="m-time">-</div><div class="k">Time</div></div>
+      </div>
+      <div class="spacer"></div>
+      <h2>ログ</h2>
+      <div id="log" class="log"></div>
+    </section>
+
+    <section class="card">
+      <h2>遠隔操作 — デバッグコマンド</h2>
+      <div class="row">
+        <button id="btn-refresh-cmd">コマンド一覧を取得</button>
+      </div>
+      <div class="spacer"></div>
+      <div id="cmd-list" class="cmd-list"></div>
+      <div class="spacer"></div>
+      <h2>シーン遷移</h2>
+      <div class="row">
+        <input id="scene-name" class="ff grow" placeholder="シーン名" />
+        <button id="btn-scene">遷移</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Data Studio — Unity データ作成</h2>
+      <div class="row">
+        <select id="sheet-select" class="ff grow"></select>
+        <button id="btn-reload-sheets" class="ghost">↻</button>
+      </div>
+      <div class="row">
+        <input id="new-sheet-name" class="ff grow" placeholder="新規シート名 (英数_)" />
+        <button id="btn-new-sheet">作成</button>
+      </div>
+      <div id="sheet-editor"></div>
+    </section>
+  </main>
+
+  <script src="./app.js" type="module"></script>
+</body>
+</html>

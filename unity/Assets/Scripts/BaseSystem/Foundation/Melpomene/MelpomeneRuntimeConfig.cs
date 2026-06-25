@@ -17,6 +17,10 @@ namespace Foundation.Melpomene
         /// <summary>Issue 本文に埋め込むバージョン表記。</summary>
         public const string Version = "1.0.0-runtime";
 
+        [Header("Submit Destination")]
+        [Tooltip("送信先モード。GitHubDirect=GitHub 直送(PAT 同梱)、Relay=任意のリレーサーバへ POST。")]
+        public MelpomeneSubmitMode submitMode = MelpomeneSubmitMode.GitHubDirect;
+
         [Header("GitHub Repository")]
         [Tooltip("リポジトリオーナー（組織名またはユーザー名）")]
         public string repositoryOwner = "";
@@ -32,6 +36,13 @@ namespace Foundation.Melpomene
         [Tooltip("作成する Issue に必ず付与するラベル")]
         public string[] defaultLabels = new[] { "melpomene", "in-game-report" };
 
+        [Header("Relay")]
+        [Tooltip("リレーサーバの送信先 URL(例: https://.../api/melpomene/report)。Relay モード時に必須。")]
+        public string relayUrl = "";
+
+        [Tooltip("非空なら HTTP ヘッダ Authorization に載せる値(例: \"Bearer xxx\")。")]
+        public string relayAuthHeader = "";
+
         [Header("Capture")]
         [Tooltip("報告本文に画面解像度などの環境情報を含めるか")]
         public bool captureScreenInfo = true;
@@ -46,11 +57,39 @@ namespace Foundation.Melpomene
         /// <summary>GitHub API のリポジトリ基底 URL。</summary>
         public string ApiBaseUrl => $"https://api.github.com/repos/{repositoryOwner}/{repositoryName}";
 
-        /// <summary>Issue 作成に必要な設定が揃っているか。</summary>
-        public bool IsValid =>
-            !string.IsNullOrEmpty(repositoryOwner) &&
-            !string.IsNullOrEmpty(repositoryName) &&
-            !string.IsNullOrEmpty(accessToken);
+        /// <summary>
+        /// 現在のモードで送信に必要な設定が揃っているか。
+        /// GitHubDirect=owner/repo/token、Relay=relayUrl。
+        /// </summary>
+        public bool IsValid
+        {
+            get
+            {
+                switch (submitMode)
+                {
+                    case MelpomeneSubmitMode.Relay:
+                        return !string.IsNullOrEmpty(relayUrl);
+                    case MelpomeneSubmitMode.GitHubDirect:
+                    default:
+                        return !string.IsNullOrEmpty(repositoryOwner) &&
+                               !string.IsNullOrEmpty(repositoryName) &&
+                               !string.IsNullOrEmpty(accessToken);
+                }
+            }
+        }
+
+        /// <summary>現在の送信先を表す短い人間向けラベル(UI 表示用)。</summary>
+        public string DescribeTarget()
+        {
+            switch (submitMode)
+            {
+                case MelpomeneSubmitMode.Relay:
+                    return string.IsNullOrEmpty(relayUrl) ? "Relay (未設定)" : $"Relay ({relayUrl})";
+                case MelpomeneSubmitMode.GitHubDirect:
+                default:
+                    return $"GitHub (direct): {repositoryOwner}/{repositoryName}";
+            }
+        }
 
         static MelpomeneRuntimeConfig _cached;
 
