@@ -13,6 +13,15 @@ export interface ServerConfig {
    * ffmpeg が PATH に必要。既定 off。
    */
   syntheticVideo: boolean;
+  /** Melpomene リレー設定。トークンはサーバ側のみで保持しクライアントへ載せない。 */
+  melpomene: {
+    /** GitHub Issues 書込トークン(未設定ならリレー無効) */
+    githubToken?: string;
+    /** "owner/repo" */
+    repo?: string;
+    /** 設定時、リクエストの Authorization ヘッダ一致を要求 */
+    relayAuth?: string;
+  };
 }
 
 function envInt(name: string, fallback: number): number {
@@ -29,6 +38,11 @@ export function loadConfig(overrides: Partial<ServerConfig> = {}): ServerConfig 
     dataDir: process.env.FOUNDATION_DEBUG_DATA_DIR ?? "data/sheets",
     webDir: process.env.FOUNDATION_DEBUG_WEB_DIR ?? "web",
     syntheticVideo: process.env.FOUNDATION_DEBUG_SYNTHETIC_VIDEO === "1",
+    melpomene: {
+      githubToken: process.env.MELPOMENE_GITHUB_TOKEN,
+      repo: process.env.MELPOMENE_REPO,
+      relayAuth: process.env.MELPOMENE_RELAY_AUTH,
+    },
     ...overrides,
   };
 }
