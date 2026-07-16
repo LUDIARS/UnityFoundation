@@ -287,6 +287,31 @@ PRの監視・自動処理を行う。
 
 ---
 
+### Clio（アセット自動選択・タグ配置）
+
+**メニュー**: `Musa > Clio アセット配置`（MusaWindow の「Clio」タブでも可）
+**詳細設計**: [`spec/tools/Clio.md`](./Clio.md)
+
+キューブをプレースホルダとして、タグに合致するリソース (prefab) を自動選択・置換する。
+
+#### 使い方
+
+1. **タグを選んで配置**: 「検索/配置」タブのタグパレットでタグを選択 →
+   [選択タグでキューブ配置]。タグ付きプレースホルダキューブが SceneView ピボットに生成される。
+2. **キューブを置くだけ**: シーンに素のキューブ (GameObject > 3D Object > Cube) を置くと、
+   自動選択が ON の間は Clio が検出してタグ (現在のパレット選択 + 名前ヒント) から
+   リソースを解決する。自動置換 ON なら即置換、OFF なら「プレースホルダ」タブで
+   候補を確認してワンクリック置換。
+3. **Curare 検索**: タグ/キーワードで Curare アセットDBを横断検索し、ローカル有無を突き合わせる。
+
+#### 解決ルール
+
+- prefab の **AssetLabel** をタグとして照合（タグ一致 +10、名前一致は補助 +2〜5）
+- AssetLabel と Curare タグの表記ゆれは設定タブの**タグマッピング**で吸収
+- ローカルに無い Curare アセットは「ローカル無し」表示のみ（取得導線は Curare 側実装待ち）
+
+---
+
 ## 設定ファイル一覧
 
 | ファイル | パス | 用途 |
@@ -295,6 +320,8 @@ PRの監視・自動処理を行う。
 | `unity_command_server.json` | `musa/terpsichore/` | UnityCommandServer設定 |
 | `settings.json` | `musa/melpomene/` | Melpomene設定（OAuth情報等） |
 | `google_token.json` | `musa/melpomene/` | Google OAuthトークン |
+| `clio_config.json` | `musa/clio/` | Clio設定（Curareエンドポイント・タグマッピング） |
+| `clio_local.json` | `musa/clio/` | Clio個人設定（認証トークン、gitignore対象） |
 | `asset_catalog_cache.json` | プロジェクトルート | ローカルカタログキャッシュ |
 | `.asset_registry.json` | `Assets/ThirdParty/` | S3アセットインストール記録 |
 | `AssetManagerConfig.asset` | Editor内 | AssetManager設定（ScriptableObject） |
@@ -314,6 +341,12 @@ PRの監視・自動処理を行う。
 | `unity/Assets/Musa/PRWatcherWindow.cs` | PR Watcher UI |
 | `unity/Assets/Musa/ClaudeCodeBridge/ClaudeCodeBridgeWindow.cs` | Claude Code Bridge UI |
 | `unity/Assets/Musa/ClaudeCodeBridge/ClaudeCodeBridgeClient.cs` | Bridge APIクライアント |
+| `unity/Assets/Musa/Clio/UI/ClioWindow.cs` | Clio 検索/配置 UI |
+| `unity/Assets/Musa/Clio/ClioClient.cs` | Curare REST APIクライアント |
+| `unity/Assets/Musa/Clio/ClioCubeWatcher.cs` | キューブ検出→自動選択 |
+| `unity/Assets/Musa/Clio/ClioResourceResolver.cs` | タグ→prefab候補解決 |
+| `unity/Assets/Musa/Clio/ClioPlaceholderReplacer.cs` | プレースホルダ置換 |
+| `unity/Assets/Musa/Clio/Runtime/ClioPlaceholder.cs` | プレースホルダコンポーネント |
 | `unity/Assets/Scripts/BaseSystemEditor/Editor/AssetManager/AssetDownloader.cs` | S3アセットダウンロード |
 | `unity/Assets/Scripts/BaseSystemEditor/Editor/AssetManager/AssetUploader.cs` | S3アセットアップロード |
 | `unity/Assets/Scripts/BaseSystemEditor/Editor/AssetManager/AssetData.cs` | データ構造定義 |
