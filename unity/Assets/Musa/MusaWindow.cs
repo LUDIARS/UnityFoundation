@@ -16,7 +16,7 @@ public class MusaWindow : EditorWindow
 {
     // NOTE: メインタブ
     private int mainTab;
-    private readonly string[] mainTabNames = { "Terpsichore", "Melpomene", "Global Settings" };
+    private readonly string[] mainTabNames = { "Terpsichore", "Melpomene", "Clio", "Global Settings" };
 
     // NOTE: サブタブ
     private int terpsichoreSubTab;
@@ -77,6 +77,11 @@ public class MusaWindow : EditorWindow
     private MelpomeneNotificationWindow melpomeneNotificationWindow;
     private MelpomeneMilestoneWindow melpomeneMilestoneWindow;
     private MelpomeneSettingsWindow melpomeneSettingsWindow;
+
+    // =====================================================================
+    // Clio: 埋め込み用インスタンス
+    // =====================================================================
+    private Clio.ClioWindow clioWindow;
 
     // =====================================================================
     // Settings: 環境チェック用
@@ -142,12 +147,17 @@ public class MusaWindow : EditorWindow
 
         // NOTE: Melpomene埋め込みウィンドウの初期化
         InitMelpomeneWindows();
+
+        // NOTE: Clio埋め込みウィンドウの初期化
+        clioWindow = CreateInstance<Clio.ClioWindow>();
+        clioWindow.InitializeForMusa();
     }
 
     private void OnDisable()
     {
         EditorApplication.update -= OnEditorUpdate;
         CleanupMelpomeneWindows();
+        if (clioWindow != null) DestroyImmediate(clioWindow);
     }
 
     private void InitMelpomeneWindows()
@@ -302,6 +312,18 @@ public class MusaWindow : EditorWindow
                 }
             }
         }
+        else if (mainTab == 2)
+        {
+            // Clio サブタブ
+            for (int i = 0; i < Clio.ClioWindow.SubTabNames.Length; i++)
+            {
+                var style = clioWindow != null && i == clioWindow.subTab ? sidebarActiveButtonStyle : sidebarButtonStyle;
+                if (GUILayout.Button(Clio.ClioWindow.SubTabNames[i], style) && clioWindow != null)
+                {
+                    clioWindow.subTab = i;
+                }
+            }
+        }
         // NOTE: 設定タブはサブタブなし
 
         GUILayout.FlexibleSpace();
@@ -332,6 +354,13 @@ public class MusaWindow : EditorWindow
             }
         }
         else if (mainTab == 2)
+        {
+            if (clioWindow != null)
+                clioWindow.DrawContent();
+            else
+                EditorGUILayout.HelpBox("ClioWindow is not initialized", MessageType.Warning);
+        }
+        else if (mainTab == 3)
         {
             DrawGlobalSettingsTab();
         }
